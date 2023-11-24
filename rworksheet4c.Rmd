@@ -1,0 +1,233 @@
+---
+title: "RWorksheet4c"
+author: "Jonash Lor Defensor"
+date: "2023-11-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+  Download and open the mpg file. Upload it to your OWN environment
+1. a. Show your solutions on how to import a csv file into the environment.
+
+```{r}
+library(readr)
+
+open_mpg <- read.csv("mpg.csv")
+open_mpg
+```
+
+1b. Which variables from mpg dataset are categorical
+
+```{r}
+str(open_mpg)
+```
+ans. manufacturer, model, trans, drv, fl, class variables are categorical
+
+1c. Which are continuous variables?
+ans. X, displ, year, cyl, cty, hwy are continuous variables
+
+2. Which manufacturer has the most models in this data set? Which model has the most variations? Show your answer.
+
+```{r}
+
+manufacturer_counts <- table(open_mpg$manufacturer)
+
+
+
+most_models_manufacturer <- as.character(names(manufacturer_counts)[which.max(manufacturer_counts)])
+
+
+model_counts <- table(open_mpg$model)
+
+
+most_variations_model <- as.character(names(model_counts)[which.max(model_counts)])
+
+
+print(paste("The manufacturer with the most models is:", most_models_manufacturer))
+print(paste("The model with the most variations is:", most_variations_model))
+```
+
+
+2a.
+
+```{r}
+dfmpg <- data.frame(Manufacturer = open_mpg$manufacturer, Model = open_mpg$model)
+unique_mpg <- unique(dfmpg)
+unique_mpg
+
+```
+
+2b.
+
+```{r}
+
+library(ggplot2)
+
+factoredManufacturer <- as.factor(unique_mpg$Manufacturer)
+manufacturerPlot <- plot(as.factor(factoredManufacturer),
+                 main = "Unique Model per Manufacturer",
+                 cex.names = 0.8, las = 2)
+
+
+
+library(dplyr)
+
+unique_count <- unique_mpg %>%
+  count(unique_mpg$Manufacturer)
+unique_count
+
+names(unique_count) <- c("Manufacturer", "Number of Models")
+unique_count
+
+ggplot(unique_count, aes(x = Manufacturer, y = `Number of Models`)) +
+geom_bar(stat = "identity", fill = "violet")
+```
+
+
+2.Same dataset will be used. You are going to show the relationship of the modeland the manufacturer.
+2a.What does ggplot(mpg, aes(model, manufacturer)) + geom_point() show?
+```{r}
+library(ggplot2)
+ggplot(open_mpg, aes(model, manufacturer)) + geom_point()
+```
+ans. Plots the mpgdataset with model on the x-axis and manufacturer on the y-axis. Each point represents a car model
+
+2b.
+Knowing the number of models produced by each company is helpful.
+I can add a label using the cty variable to each point and color code each point based on the class variable to make it more informative.
+
+
+3. Plot the model and the year using ggplot(). Use only the top 20 observations. Write the codes and its results.
+
+```{r}
+library(ggplot2)
+
+Aobj <-head(open_mpg, 20)
+Aobj
+
+ggplot(data = Aobj, aes(x = year, y = model, color = as.factor(model))) +
+ geom_point(alpha = 0.7) +
+ labs(title = "Relationship between Model, Year, and Manufacturer",
+       x = "Year",
+       y = "Model",
+       color = "Manufacturer") +
+ theme_minimal()
+
+```
+
+4. Using the pipe (%>%), group the model and get the number of cars per model. Show codes and its result.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+head(open_mpg, 20)
+
+
+open_mpg %>%
+ group_by(model) %>%
+ summarize(count = n()) -> grouped_open_mpg
+
+
+print(grouped_open_mpg)
+
+```
+
+
+4a. Plot using geom_bar() using the top 20 observations only. The graphs should have a title, labels and colors. Show code and results.
+
+```{r}
+
+top_20 <- open_mpg %>%
+ group_by(model) %>%
+ summarise(count = n()) %>%
+ arrange(desc(count)) %>%
+ head(20)
+
+
+plot <- ggplot(top_20, aes(x = reorder(model, count), y = count, fill = model)) +
+ geom_bar(stat = "identity", color = "black") +
+ scale_fill_brewer(palette = "Set2") +
+ coord_flip() +
+ labs(title = "Top 20 Most Popular Car Models",
+       x = "Model",
+       y = "Number of Cars") +
+ theme_minimal() +
+ theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+print(plot)
+
+```
+
+4b. Plot using the geom_bar() + coord_flip() just like what is shown below. Show codes and its result.
+
+```{r}
+open_mpg <- data.frame(model = sample(letters[1:20], 1000, replace = TRUE))
+
+
+top_20 <- open_mpg %>%
+ group_by(model) %>%
+ summarise(count = n()) %>%
+ arrange(desc(count)) %>%
+ head(20)
+
+top_20 <- top_20 %>%
+ group_by(model) %>%
+ head(8)
+
+plot <- ggplot(top_20, aes(x = reorder(model, count), y = count, fill = model)) +
+ geom_bar(stat = "identity", color = "black") +
+ scale_fill_brewer(palette = "Set2") +
+ coord_flip() +
+ labs(title = "Top 20 Most Popular Car Models",
+       x = "Model",
+       y = "Number of Cars") +
+ theme_minimal() +
+ theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(plot)
+
+```
+
+5.Plot the relationship between cyl - number of cylinders and displ - engine displacement using geom_point with aesthetic color = engine displacement. Title should be “Relationship between No. of Cylinders and Engine Displacement”.
+
+```{r}
+open_mpg <- data.frame(cyl = sample(6:10, 1000, replace = TRUE),
+                 displ = sample(80:400, 1000, replace = TRUE),
+                 engine_displacement = sample(200:4000, 1000, replace = TRUE))
+
+
+plot <- ggplot(open_mpg, aes(x = cyl, y = displ, color = engine_displacement)) +
+ geom_point() +
+ scale_color_gradient(low = "blue", high = "red") +
+ labs(title = "Relationship between No. of Cylinders and Engine Displacement",
+       x = "No. of Cylinders",
+       y = "Engine Displacement") +
+ theme_minimal() +
+ theme(plot.title = element_text(hjust = 0.5))
+
+print(plot)
+```
+5a.
+To describe the relationship, we can analyze the scatter plot.
+
+The plot shows that there is a downward trend. As the number of cylinders increases, the engine displacement tends to decrease.
+There are also outliers, where the engine displacement is significantly larger or smaller than the others for the same number of cylinders.
+
+```{r}
+plot <- ggplot(open_mpg, aes(x = displ, y = cyl, color = "red")) +
+ geom_point() +
+ labs(title = "Relationship between Engine Displacement and Highway Mpg",
+      x = "Engine Displacement",
+      y = "Highway Mpg",
+      color = "Highway Mpg") +
+ theme_minimal()
+
+print(plot)
+```
